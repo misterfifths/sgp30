@@ -72,7 +72,7 @@ class SGP30(object):
         self._bus.open(self.i2c_bus_number)
 
         self.serial_number = self._get_serial_number()
-        sn_string = ' '.join(hex(x) for x in self.serial_number)
+        sn_string = ' '.join('0x{:04x}'.format(x) for x in self.serial_number)
         _log('got serial number: ' + sn_string)
 
         self._raw_feature_set = self._get_feature_set_version()
