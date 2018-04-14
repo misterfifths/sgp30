@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-# MIT; see LICENSE
+# 2018 / MIT / Tim Clem / github.com/misterfifths
+# See LICENSE for details
 
 from __future__ import print_function
 
@@ -9,20 +10,25 @@ from sgp30 import SGP30
 
 
 def main():
+    warming_up = True
     baseline_counter = 0
+
     with SGP30() as chip:
         while True:
             measurement = chip.measure_air_quality()
 
             # Chip returns (400, 0) for the first ~15 seconds while it warms up
-            if not measurement.is_probably_valid():
-                print('... warming up ...')
-                sleep(1)
-                continue
+            if warming_up:
+                if measurement.is_probably_warmup_value():
+                    print('... warming up ...')
+                    sleep(1)
+                    continue
+                else:
+                    warming_up = False
 
             print(measurement)
 
-            # Don't take this as a complete example... read the spec sheet about how you're supposed to stash and restore this baseline, and initial burn-in, and so on.
+            # Don't take this as a complete example... read the spec sheet about how you're supposed to stash and restore the baseline, initial burn-in, humidity compensation, *and how you need to sample every second to maintain accurate results*
             baseline_counter = baseline_counter + 1
             if baseline_counter % 100 == 0:
                 baseline_counter = 0

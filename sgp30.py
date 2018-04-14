@@ -1,4 +1,4 @@
-# 2018 / MIT / Tim Clem / github.io/misterfifths
+# 2018 / MIT / Tim Clem / github.com/misterfifths
 # See LICENSE for details
 # Heavily inspired by the Adafruit CircuitPython implementation by ladyada:
 # https://github.com/adafruit/Adafruit_CircuitPython_SGP30
@@ -44,8 +44,8 @@ def _log(*args):
 
 _AirQuality = namedtuple('AirQuality', 'co2_ppm voc_ppb')
 class AirQuality(_AirQuality):
-    def is_probably_valid(self):
-        return self.co2_ppm != 400 or self.voc_ppb != 0
+    def is_probably_warmup_value(self):
+        return self.co2_ppm == 400 and self.voc_ppb == 0
 
 
 class SGP30(object):
@@ -97,7 +97,9 @@ class SGP30(object):
         return self._run_word_getter('get_feature_set_version')[0]
 
     def _has_feature_set(self, required_feature_set):
-        if required_feature_set is None: return True
+        if required_feature_set is None:
+            return True
+
         return self.chip_version == (required_feature_set & _SGP30_FEATURE_SET_BITMASK)
 
 
@@ -191,15 +193,12 @@ class SGP30(object):
     @classmethod
     def _bytes_for_checksummed_words(cls, words):
         res = bytearray()
-        byte_offset = 0
         for word in words:
             # just going to let the error from struct.pack handle the case of the word being > 65536
             word_bytes = struct.pack('>H', word)
             res.extend(word_bytes)
-            byte_offset = byte_offset + 2
 
             res.append(cls._crc(word_bytes))
-            byte_offset = byte_offset + 1
 
         return res
 
