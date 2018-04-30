@@ -7,9 +7,11 @@ from __future__ import print_function
 
 from time import sleep
 from sgp30 import SGP30
+from smbus import SMBus
 
 
 def main():
+    smbus = SMBus(1)  # zero on some boards
     warming_up = True
     baseline_counter = 0
 

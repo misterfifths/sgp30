@@ -49,15 +49,14 @@ class AirQuality(_AirQuality):
 
 
 class SGP30(object):
-    def __init__(self, i2c_bus_number=1, i2c_address=0x58):
-        self.i2c_bus_number = i2c_bus_number
+    def __init__(self, smbus, i2c_address=0x58):
         self.i2c_address = i2c_address
 
         self._raw_feature_set = None
         self.chip_version = None
         self.serial_number = None
 
-        self._bus = SMBus()
+        self._bus = smbus
         self.__bus_lock = Lock()
 
 
@@ -69,8 +68,6 @@ class SGP30(object):
         self.close()
 
     def open(self):
-        self._bus.open(self.i2c_bus_number)
-
         self.serial_number = self._get_serial_number()
         sn_string = ' '.join('0x{:04x}'.format(x) for x in self.serial_number)
         _log('got serial number: ' + sn_string)
