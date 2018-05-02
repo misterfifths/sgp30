@@ -12,6 +12,7 @@ from time import sleep
 import struct
 from threading import Lock
 from sys import stderr
+from math import modf
 
 
 SGP30Command = namedtuple(
@@ -113,7 +114,21 @@ class SGP30(object):
     def set_baseline(self, co2_baseline, voc_baseline):
         self._run_word_setter('set_baseline', [co2_baseline, voc_baseline])
 
-    def set_humidity(self, humidity):
+    def set_humidity(self, humidity_g_per_m3):
+        fpart, ipart = modf(humidity_g_per_m3)
+
+        assert ipart < 256, 'Humidity must be less than 256 g/m^3'
+
+        ipart = int(ipart)
+        quantized_fpart = int(round(fpart * 256))
+
+        humidity_word = (ipart & 0xff) << 8 | (quantized_fpart & 0xff)
+
+        self._set_humidity_raw(humidity_word)
+
+    # This takes the raw integer value for the humidity, which is in a weird format (see
+    # the spec sheet). Probably just use set_humidity().
+    def _set_humidity_raw(self, humidity):
         self._run_word_setter('set_humidity', [humidity])
 
     def measure_raw_signals(self):
