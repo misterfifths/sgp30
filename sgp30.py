@@ -13,6 +13,7 @@ import struct
 from threading import Lock
 from sys import stderr
 from math import modf
+from datetime import datetime
 
 
 SGP30Command = namedtuple(
@@ -42,9 +43,17 @@ def _log(*args):
     print('[SGP30]', *args, file=stderr)
 
 
+_RawSample = namedtuple('RawSample', 'timestamp raw_co2 raw_voc')
+class RawSample(_RawSample):
+    def __init__(self, raw_co2, raw_voc):
+        super(RawSample, self).__init__(self, datetime.now(), raw_co2, raw_voc)
 
-_AirQuality = namedtuple('AirQuality', 'co2_ppm voc_ppb')
+
+_AirQuality = namedtuple('AirQuality', 'timestamp co2_ppm voc_ppb')
 class AirQuality(_AirQuality):
+    def __init__(self, co2_ppm, voc_ppb):
+        super(AirQuality, self).__init__(self, datetime.now(), co2_ppm, voc_ppb)
+
     def is_probably_warmup_value(self):
         return self.co2_ppm == 400 and self.voc_ppb == 0
 
@@ -106,10 +115,12 @@ class SGP30(object):
 
 
     def measure_air_quality(self):
-        return AirQuality(*self._run_word_getter('measure_air_quality'))
+        co2_ppm, voc_ppb = self._run_word_getter('measure_air_quality')
+        return AirQuality(co2_ppm, voc_ppb)
 
     def get_baseline(self):
-        return AirQuality(*self._run_word_getter('get_baseline'))
+        raw_co2, raw_voc = self._run_word_getter('get_baseline')
+        return RawSample(raw_co2, raw_voc)
 
     def set_baseline(self, co2_baseline, voc_baseline):
         self._run_word_setter('set_baseline', [co2_baseline, voc_baseline])
@@ -132,7 +143,8 @@ class SGP30(object):
         self._run_word_setter('set_humidity', [humidity])
 
     def measure_raw_signals(self):
-        return self._run_word_getter('measure_raw_signals')
+        raw_co2, raw_voc = self._run_word_getter('measure_raw_signals')
+        return RawSample(raw_co2, raw_voc)
 
 
     def _run_word_getter(self, cmd_name):
