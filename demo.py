@@ -15,7 +15,7 @@ def main():
     warming_up = True
     baseline_counter = 0
 
-    with SGP30() as chip:
+    with SGP30(smbus) as chip:
         while True:
             measurement = chip.measure_air_quality()
 

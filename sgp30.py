@@ -45,14 +45,15 @@ def _log(*args):
 
 _RawSample = namedtuple('RawSample', 'timestamp raw_co2 raw_voc')
 class RawSample(_RawSample):
-    def __init__(self, raw_co2, raw_voc):
-        super(RawSample, self).__init__(self, datetime.now(), raw_co2, raw_voc)
-
+    def __new__(cls, raw_co2, raw_voc):
+        self = super(RawSample, cls).__new__(cls, datetime.now(), raw_co2, raw_voc)
+        return self
 
 _AirQuality = namedtuple('AirQuality', 'timestamp co2_ppm voc_ppb')
 class AirQuality(_AirQuality):
-    def __init__(self, co2_ppm, voc_ppb):
-        super(AirQuality, self).__init__(self, datetime.now(), co2_ppm, voc_ppb)
+    def __new__(cls, co2_ppm, voc_ppb):
+        self = super(AirQuality, cls).__new__(cls, datetime.now(), co2_ppm, voc_ppb)
+        return self
 
     def is_probably_warmup_value(self):
         return self.co2_ppm == 400 and self.voc_ppb == 0
@@ -219,7 +220,7 @@ class SGP30(object):
         res = bytearray()
         for word in words:
             # just going to let the error from struct.pack handle the case of the word being > 65536
-            word_bytes = struct.pack('>H', word)
+            word_bytes = bytearray(struct.pack('>H', word))
             res.extend(word_bytes)
 
             res.append(cls._crc(word_bytes))
